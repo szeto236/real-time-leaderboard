@@ -1,24 +1,33 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { io, Socket } from "socket.io-client";
+import { InputForm } from "./components/InputForm";
+import { UsersList } from "./components/UsersList";
+import { LeaderboardActions } from "./store/actions";
 
+let socket: Socket;
 function App() {
+  const dispatch = useDispatch();
+  const users = useSelector((state: { users: [] }) => state.users);
+
+  useEffect(() => {
+    socket = io("http://localhost:3001");
+    dispatch({
+      type: LeaderboardActions.loadInitialSocketData.started.type,
+      payload: { socket },
+    });
+
+    socket.on("userAdded", (res: { username: string; score: number }) => {
+      dispatch({ type: LeaderboardActions.addUser, payload: res });
+    });
+  }, [dispatch]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="App container mx-auto">
+      <h1 className="text-4xl font-bold text-center my-8">LEADERBOARD</h1>
+
+      <InputForm socket={socket} />
+      <UsersList users={users} />
     </div>
   );
 }
